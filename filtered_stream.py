@@ -21,7 +21,7 @@ class FilteredStream():
 
         return r
 
-    def get_regras(self):
+    def _get_regras(self):
         # busca por regras já existentes e retorna um arquivo json
         resposta = requests.get(
             "https://api.twitter.com/2/tweets/search/stream/rules",
@@ -37,7 +37,7 @@ class FilteredStream():
 
         return resposta.json()
 
-    def deletar_regras(self, regras):
+    def _deletar_regras(self, regras):
         # pega as regras do get_regras e as deleta
         if regras is None or "data" not in regras:
             return None
@@ -57,7 +57,7 @@ class FilteredStream():
             )
                 
     
-    def set_rules(self):
+    def _set_rules(self):
         # define novas regras
         sample_rules = self.rules
 
@@ -74,7 +74,7 @@ class FilteredStream():
                 f"Cannot add rules (HTTP {response.status_code}): {response.text}"
             )
         
-    def get_stream(self):
+    def _get_stream(self):
         # se conecta e pega a stream de dados
         response = requests.get(
             "https://api.twitter.com/2/tweets/search/stream",
@@ -106,10 +106,10 @@ class FilteredStream():
 
     def go(self):
         # test only
-        past_rules = self.get_regras()
-        self.deletar_regras(past_rules)
-        self.set_rules()
-        self.get_stream()
+        past_rules = self._get_regras()
+        self._deletar_regras(past_rules)
+        self._set_rules()
+        self._get_stream()
 
 if __name__=="__main__":
     rules = [
