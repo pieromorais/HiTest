@@ -1,6 +1,7 @@
 from decouple import config
 import requests 
 import json
+from acessar_mysql import ConnBase
 
 class FilteredStream():
 
@@ -29,7 +30,7 @@ class FilteredStream():
             raise Exception(
                 f"Cannot get rules (HTTP {resposta.status_code}): {resposta.text}"
             )
-        print(json.dumps(resposta.json()))
+        #print(json.dumps(resposta.json()))
 
         return resposta.json()
 
@@ -51,14 +52,12 @@ class FilteredStream():
                 f"Não foi possível deletar regras (HTTP {response.status_code}): {response.text}"
             )
         
-        print(json.dumps(response.json()))
+        #print(json.dumps(response.json()))
         
     
     def set_rules(self):
 
-        print(type(self.rules))
         sample_rules = self.rules
-        print(type(self.rules))
 
         payload = {"add": sample_rules}
 
@@ -73,7 +72,7 @@ class FilteredStream():
                 f"Cannot add rules (HTTP {response.status_code}): {response.text}"
             )
         
-        print(json.dumps(response.json()))
+        #print(json.dumps(response.json()))
 
     def get_stream(self):
         response = requests.get(
@@ -87,10 +86,22 @@ class FilteredStream():
                 f"Cannot get stream (HTTP({response.status_code}): {response.text}"
             )
 
+        conn = ConnBase()
         for response_line in response.iter_lines():
             if response_line:
                 json_response = json.loads(response_line)
-                print(json.dumps(json_response, indent=4, sort_keys=True))
+                #print(json.dumps(json_response, indent=4, sort_keys=True))
+
+                user_id = json_response["data"]["id"]
+                tweet_text = json_response["data"]["text"]
+                print(tweet_text)
+                regra = json_response["matching_rules"][0]["tag"]
+
+                conn.insert_to_table(
+                    user_id,
+                    tweet_text,
+                    regra
+                )
 
     def go(self):
         # test only
