@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 class ConnBase():
 
     def __init__(self) -> None:
-        
+        # dados para conectar no DB
         self.config = {
             'host': 'localhost',
             'port': 3306,
@@ -28,13 +28,19 @@ class ConnBase():
         engine = db.create_engine(self.connection_str)
         self.Session = sessionmaker(bind=engine)
 
+        # criando conexão
         self.connection = engine.connect()
 
     def insert_to_table(self, userid, tweet_text, regra):
 
+        # comando em sql para inserir dados na tabela
         str_model = "INSERT INTO tweets_table (user_id, tweet_text, regra) VALUES (%s, %s, %s);"
+        # tupla com dados
         dados = (userid, tweet_text, regra)    
+
+        # executa o comando insert
         self.connection.execute(str_model, dados)
         
         session = self.Session()
+        # salva no banco de dados
         session.commit()

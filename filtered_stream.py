@@ -6,12 +6,15 @@ from acessar_mysql import ConnBase
 class FilteredStream():
 
     def __init__(self, rules):
+        # pega as credenciais do API do twitter
         self.api_key = config('TWITTER_API_KEY')
         self.secret_key = config('TWITTER_API_SECRET_KEY')
         self.bearer_token = config('TWITTER_BEARER_TOKEN')
 
+        # regras que definem a busca nos tweets
         self.rules = rules
 
+    # autorização para acessar os dados via API
     def bearer_auth(self, r):
         r.headers["Authorization"] = f'Bearer {self.bearer_token}'
         r.headers["User-Agent"] = "v2FilteredStreamPython"
@@ -19,7 +22,7 @@ class FilteredStream():
         return r
 
     def get_regras(self):
-
+        # busca por regras já existentes e retorna um arquivo json
         resposta = requests.get(
             "https://api.twitter.com/2/tweets/search/stream/rules",
             auth=self.bearer_auth
@@ -35,6 +38,7 @@ class FilteredStream():
         return resposta.json()
 
     def deletar_regras(self, regras):
+        # pega as regras do get_regras e as deleta
         if regras is None or "data" not in regras:
             return None
         ids = list(map(lambda regra: regra["id"], regras["data"]))
@@ -51,12 +55,10 @@ class FilteredStream():
             raise Exception(
                 f"Não foi possível deletar regras (HTTP {response.status_code}): {response.text}"
             )
-        
-        #print(json.dumps(response.json()))
-        
+                
     
     def set_rules(self):
-
+        # define novas regras
         sample_rules = self.rules
 
         payload = {"add": sample_rules}
@@ -67,14 +69,13 @@ class FilteredStream():
             json=payload
         )
 
-        if response.status_code != 201:
+        if response.status_code != 201: # create - ok
             raise Exception(
                 f"Cannot add rules (HTTP {response.status_code}): {response.text}"
             )
         
-        #print(json.dumps(response.json()))
-
     def get_stream(self):
+        # se conecta e pega a stream de dados
         response = requests.get(
             "https://api.twitter.com/2/tweets/search/stream",
             auth=self.bearer_auth,
@@ -86,17 +87,17 @@ class FilteredStream():
                 f"Cannot get stream (HTTP({response.status_code}): {response.text}"
             )
 
-        conn = ConnBase()
+        conn = ConnBase() # instancia para conectar ao DB
         for response_line in response.iter_lines():
             if response_line:
                 json_response = json.loads(response_line)
-                #print(json.dumps(json_response, indent=4, sort_keys=True))
 
+                # dados que serão salvos no DB - userid, texto e regra
                 user_id = json_response["data"]["id"]
                 tweet_text = json_response["data"]["text"]
-                print(tweet_text)
                 regra = json_response["matching_rules"][0]["tag"]
 
+                # salva dados acima na tabela
                 conn.insert_to_table(
                     user_id,
                     tweet_text,
@@ -117,5 +118,6 @@ if __name__=="__main__":
         {"value": "Comida lang:pt", "tag": "Food rule"}
     ]
 
+    # faz todo processo de coletar da API e salvar no DB
     fsi = FilteredStream(rules)
     fsi.go()
