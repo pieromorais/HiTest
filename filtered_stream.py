@@ -30,14 +30,14 @@ class FilteredStream():
                 f"Cannot get rules (HTTP {resposta.status_code}): {resposta.text}"
             )
         print(json.dumps(resposta.json()))
-        print("Porra")
+
         return resposta.json()
 
     def deletar_regras(self, regras):
         if regras is None or "data" not in regras:
             return None
         ids = list(map(lambda regra: regra["id"], regras["data"]))
-        print("porra 4")
+        
         payload = {"delete": {"ids": ids}}
 
         response = requests.post(
