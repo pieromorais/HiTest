@@ -1,25 +1,40 @@
 import sqlalchemy as db
 from decouple import config as c
+from sqlalchemy.orm import sessionmaker
 
-config = {
-    'host': 'localhost',
-    'port': 3306,
-    'user': c('DB_USER'),
-    'password': c('DB_PASS'),
-    'database': 'hi_database'
-}
+class ConnBase():
 
-db_user = config.get('user')
-db_pwd = config.get('password')
-db_host = config.get('host')
-db_port = config.get('port')
-db_name = config.get('database')
+    def __init__(self) -> None:
+        
+        self.config = {
+            'host': 'localhost',
+            'port': 3306,
+            'user': c('DB_USER'),
+            'password': c('DB_PASS'),
+            'database': 'hi_database',
+            'charset': 'utf8mb4'
+        }
 
-# connection str
-connection_str = f'mysql+pymysql://{db_user}:{db_pwd}@{db_host}:{db_port}/{db_name}'
+        self.db_user = self.config.get('user')
+        self.db_pwd = self.config.get('password')
+        self.db_host = self.config.get('host')
+        self.db_port = self.config.get('port')
+        self.db_name = self.config.get('database')
 
-# connect to database
-engine = db.create_engine(connection_str)
-connection = engine.connect()
+        # connection str
+        self.connection_str = f'mysql+pymysql://{self.db_user}:{self.db_pwd}@{self.db_host}:{self.db_port}/{self.db_name}'
 
-print(connection)   
+        # connect to database
+        engine = db.create_engine(self.connection_str)
+        self.Session = sessionmaker(bind=engine)
+
+        self.connection = engine.connect()
+
+    def insert_to_table(self, userid, tweet_text, regra):
+
+        str_model = "INSERT INTO tweets_table (user_id, tweet_text, regra) VALUES (%s, %s, %s);"
+        dados = (userid, tweet_text, regra)    
+        self.connection.execute(str_model, dados)
+        
+        session = self.Session()
+        session.commit()
