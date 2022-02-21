@@ -1,3 +1,4 @@
+from unittest import result
 import sqlalchemy as db
 from decouple import config as c
 from sqlalchemy.orm import sessionmaker
@@ -27,7 +28,7 @@ class ConnBase():
         # connect to database
         engine = db.create_engine(self.connection_str)
         self.Session = sessionmaker(bind=engine)
-
+        self.session = self.Session()
         # criando conexão
         self.connection = engine.connect()
 
@@ -41,6 +42,44 @@ class ConnBase():
         # executa o comando insert
         self.connection.execute(str_model, dados)
         
-        session = self.Session()
         # salva no banco de dados
-        session.commit()
+        self.session.commit()
+    
+    def ultima_entrada(self, regra):
+        # seleciona e retorna a última entrada por regra
+        comando = "select max(tweet_time) from tweets_table where regra='{}';".format(regra)
+        result = self.session.execute(comando)
+
+        for row in result:
+            ult_entrada = row[0]
+        
+        return regra, ult_entrada
+    
+    def primeira_entrada(self, regra):
+        # seleciona e retorna a primeira entrada por regra
+        comando = "select min(tweet_time) from tweets_table where regra='{}';".format(regra)
+        result = self.session.execute(comando)
+
+        for row in result:
+            pri_entrada = row[0]
+        
+        return regra, pri_entrada
+
+    def tweet_mais_longo(self, regra):
+        # seleciona e retorna o tweet mais longo por regra
+        comando = "select max(length(tweet_text)) from tweets_table where regra='{}';".format(regra)
+        result = self.session.execute(comando)
+        for row in result:
+            tamanho = row[0]
+        return tamanho, regra
+
+    def tweet_mais_curto(self, regra):
+        # seleciona e retorna o tweet mais curto por regra
+        comando = "select min(length(tweet_text)) from tweets_table where regra='{}';".format(regra)
+        result = self.session.execute(comando)
+        
+        for row in result:
+            tamanho = row[0]
+            
+        return tamanho, regra
+    
